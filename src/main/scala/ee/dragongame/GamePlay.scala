@@ -25,6 +25,24 @@ object GamePlay extends StrictLogging {
     false
   }
 
+  val testDragons = if (learn) {
+    val li = List.newBuilder[Dragon]
+    for (s <- 0 to 10) {
+      for (c <- 0 to 10) {
+        for (w <- 0 to 10) {
+          for (f <- 0 to 10) {
+            if (s + c + w + f == 20) {
+              li += Dragon(scaleThickness = s, clawSharpness = c, wingStrength = w, fireBreath = f)
+            }
+          }
+        }
+      }
+    }
+    li.result()
+  } else {
+    List.empty[Dragon]
+  }
+
 
   def main(args: Array[String]): Unit = {
 
@@ -33,8 +51,6 @@ object GamePlay extends StrictLogging {
     val weatherURL = config.getString("site.url") + config.getString("site.weather")
 
     val replacement_game_id = config.getString("game_id")
-
-
 
     logger.trace(s"replacement_game_id=" + replacement_game_id)
     logger.trace(s"game=" + newGameURL)
@@ -45,7 +61,7 @@ object GamePlay extends StrictLogging {
     val weatherProvider = new Weather
     val solutionProvider = new GameSolution
 
-    val gamePlay = new GamePlay(weatherProvider,solutionProvider,replacement_game_id,newGameURL,solutionURL,weatherURL)
+    val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
 
     val gameTwoString =
       """  {
@@ -59,15 +75,12 @@ object GamePlay extends StrictLogging {
                             }
                           }"""
 
-    println (gamePlay.findSolution(gameTwoString))
-
-
+    println(gamePlay.play(gameTwoString))
 
 
   }
 
 }
-
 
 
 final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
@@ -93,8 +106,38 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
   }
 
   def play(gameJson: String): Boolean = {
-    val (game: Game, dragon: Option[Dragon]) = findSolution(gameJson)
-    sendSolution(game, dragon.get)
+    val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
+    dragonOpt match {
+      case Some(dragon) =>
+        logger.info(s"solution for ${game.knight} in weather $weather already exists")
+        val resB = sendSolution(game, dragon)
+        if (!resB) {
+          logger.error("solution rejected")
+          System.exit(1)
+        }
+        resB
+      case None =>
+        if (GamePlay.learn) {
+          GamePlay.testDragons.par.foreach {
+            dragon =>
+              if (sendSolution(game, dragon)) {
+                solution.addSolution(game.knight, weather, dragon)
+              }else{
+                logger.trace(s"$dragon is no solution for ${game.knight}")
+              }
+          }
+          if (solution.findDragon(game.knight, weather).isDefined) {
+            true
+          } else {
+            logger.warn(s"no solution for ${game.knight} in weather $weather")
+            false
+          }
+        } else {
+          logger.warn(s"no solution for ${game.knight} in weather $weather")
+          false
+        }
+    }
+
   }
 
 
@@ -103,7 +146,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
     val battle_weather = weather.getWeather(new URL(weatherURLstr.replaceAllLiterally(replacement_game_id, game.gameId)))
     logger.trace(s"weather for game $game is $battle_weather")
     val dragon = solution.findDragon(game.knight, battle_weather)
-    (game, dragon)
+    (game, battle_weather, dragon)
   }
 
   def sendSolution(game: Game, dragon: Dragon): Boolean = {

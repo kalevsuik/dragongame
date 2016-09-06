@@ -12,7 +12,7 @@ class GameSolutionProviderTest extends WordSpecLike with Matchers {
     }
     "existing game return dragon" in {
       val game = Knight(agility = 8, armor = 6, attack = 4, endurance = 2, "Nemo")
-      gameSP.findDragon(game, WeatherNormal) shouldBe Dragon(scaleThickness = 3, clawSharpness = 4, wingStrength = 10, fireBreath = 3)
+      gameSP.findDragon(game, WeatherNormal) shouldBe Some(Dragon(scaleThickness = 4, clawSharpness = 4, wingStrength = 10, fireBreath = 2))
     }
   }
 }

@@ -7,6 +7,7 @@ import org.mapdb.{DB, DBMaker, Serializer}
 
 trait GameSolutionProvider {
   def findDragon(knight: Knight, weather: WeatherCode): Option[Dragon]
+  def addSolution(knight: Knight, weather: WeatherCode, dragon: Dragon)
 }
 
 final class GameSolution(learn: Boolean = false) extends GameSolutionProvider with StrictLogging{
@@ -48,6 +49,8 @@ final class GameSolution(learn: Boolean = false) extends GameSolutionProvider wi
     val ar=victory.get(key.toString)
     if(ar==null || ar.length < 4){
       victory.put(key.toString,dragon2Arrray(dragon))
+    }else{
+      logger.info(s"$knight in $weather already has solution, additional $dragon")
     }
   }
 
