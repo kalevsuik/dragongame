@@ -1,27 +1,41 @@
 package ee.dragongame
 
+import java.net.URL
+
+import scala.xml.Elem
+
+trait WeatherRequest{
+  def getWeather (weatherURL: URL): WeatherCode
+}
+
 
 sealed trait WeatherCode
 
 case object WeatherNormal extends WeatherCode
+
 case object WeatherStormy extends WeatherCode
+
 case object WeatherRain extends WeatherCode
+
 case object WeatherFog extends WeatherCode
 
 
-object Weather {
+class Weather extends WeatherRequest{
 
-  def getWeather(weather:String)={
-    val weatherAsXML = scala.xml.XML.loadString(weather)
+  def getWeather(weatherURL: URL) = {
+    val weatherAsXML = scala.xml.XML.load(weatherURL)
 
-    (weatherAsXML \ "code").text  match {
-      case "NMR" => Some(WeatherNormal)
-      case "STORM" => Some(WeatherStormy)
-      case "RAIN" => Some(WeatherRain)
-      case "FOG" => Some(WeatherFog)
-      case _ => None
-    }
+    parseWeatherString(weatherAsXML)
 
   }
 
+  def parseWeatherString(weatherAsXML: Elem): WeatherCode with Product with Serializable = {
+    (weatherAsXML \ "code").text match {
+      case "NMR" => WeatherNormal
+      case "STORM" => WeatherStormy
+      case "RAIN" => WeatherRain
+      case "FOG" => WeatherFog
+
+    }
+  }
 }

@@ -1,26 +1,37 @@
 package ee.dragongame
 
+import java.net.URL
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import ee.dragongame.elements.GameResult
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
 
+import scala.collection.immutable.HashMap
 import scala.io.Source
 
 
 /*
  (8,6,4,2) ->
- (3,4,10,3)  -> GameResult(Victory,Dragon was successful in a glorious battle)
+ "agility": 8,
+ "armor": 6,
+ "attack": 4,
+ "endurance": 2,
+
+ GameResult(Victory,Dragon was successful in a glorious battle)
+
+ (3,4,10,3), (3,5,10,2), (3,6,10,1), (4,4,10,2), (4,5,10,1), (5,4,10,1)
+ "scaleThickness"
+ "clawSharpness"
+ "wingStrength"
+ "fireBreath"
  */
 
-case class Knight(agility: Int, armor: Int, attack: Int, endurance: Int, name: String)
 
-case class Game(gameId: Long, knight: Knight)
 
-case class GameResult(status: String, message: String)
-
-object Game {
+object GameStarter {
   def game_base_url(gameid: Long) = s"http://www.dragonsofmugloar.com/api/game/$gameid/solution"
 
   def dragon(scaleThickness: Int, clawSharpness: Int, wingStrength: Int, fireBreath: Int) =
@@ -81,6 +92,10 @@ object Game {
 
     var counter =0
 
+    val weather = new Weather
+
+    val list =List.newBuilder[(Int,Int,Int,Int)]
+
     for ( s  <-  0 to 10){
       for ( c  <-  0 to 10){
         for ( w  <-  0 to 10){
@@ -106,11 +121,16 @@ object Game {
                 //println(rdata)
                 val rgm1 = objectMapper.readValue(rdata, classOf[GameResult])
 
-                println(s"$v  -> $rgm1")
+
                 if(rgm1.status == "Defeat"){
                   //println("Defeat !!! ")
+                  println(s"$v  -> $rgm1")
                 }else{
-                  System.exit(0)
+                  //System.exit(0)
+                  //val weather1 = Source.fromURL(s"$WEATHER_URL$game2").mkString
+                  //val weatherAsXML = scala.xml.XML.load(new URL(s"$WEATHER_URL$game1"))
+
+                  list += v
 
                 }
               }
@@ -122,6 +142,11 @@ object Game {
         }
       }
     }
+
+    val kn = (8,6, 4, 2)
+
+    println(s"$kn -> ${list.result()} " )
+    println(weather.getWeather(new URL(s"$WEATHER_URL$game2")))
 
 
 
