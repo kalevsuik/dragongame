@@ -5,15 +5,26 @@ import java.net.URL
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.scalalogging.StrictLogging
 import ee.dragongame.elements.{Dragon, Game, GameResult}
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
+import org.mapdb.{DB, DBMaker, Serializer}
 
 import scala.io.Source
 
-object GamePlay {
+case class DBKey(agility: Int, armor: Int, attack: Int, endurance: Int, weather: WeatherCode)
+
+object GamePlay extends StrictLogging {
   val config = ConfigFactory.load(this.getClass.getClassLoader)
+
+  val learn = if (config.hasPath("learn")) {
+    config.getBoolean("learn")
+  } else {
+    false
+  }
+
 
   def main(args: Array[String]): Unit = {
 
@@ -23,35 +34,44 @@ object GamePlay {
 
     val replacement_game_id = config.getString("game_id")
 
-    val solutionProvider = new GameSolution
+
+
+    logger.trace(s"replacement_game_id=" + replacement_game_id)
+    logger.trace(s"game=" + newGameURL)
+    logger.trace(s"solution=" + solutionURL)
+    logger.trace(s"weather=" + weatherURL)
+    logger.trace(s"learn=" + learn)
+
     val weatherProvider = new Weather
+    val solutionProvider = new GameSolution
 
-    println("replacement_game_id=" + replacement_game_id)
-    println("game=" + newGameURL)
-    println("solution=" + solutionURL)
-    println("weather=" + weatherURL)
+    val gamePlay = new GamePlay(weatherProvider,solutionProvider,replacement_game_id,newGameURL,solutionURL,weatherURL)
 
-    println(solutionURL.replaceAllLiterally(replacement_game_id, "12345678"))
+    val gameTwoString =
+      """  {
+                          "gameId": 8613491,
+                            "knight": {
+                              "agility": 8,
+                              "armor": 6,
+                              "attack": 4,
+                              "endurance": 2,
+                              "name": "Sir. Dale Moore of Nova Scotia"
+                            }
+                          }"""
+
+    println (gamePlay.findSolution(gameTwoString))
+
+
 
 
   }
 
-  /*
-  url str for game request
-  url str for weather request
-  url str for game solution
-
-  get new game
-  get wheater report for new game
-  get solution for the game
-  calculate statistics, log record
-  * */
-
-
 }
 
-class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
-               val replacement_game_id: String, val newGameURLstr: String, val solutionURLstr: String, val weatherURLstr: String) {
+
+
+final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
+                     val replacement_game_id: String, val newGameURLstr: String, val solutionURLstr: String, val weatherURLstr: String) extends StrictLogging {
   require(weather != null)
   require(solution != null)
   require(replacement_game_id != null)
@@ -69,13 +89,24 @@ class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
   }
 
   def play: Boolean = {
-    val gameJson = Source.fromURL(newGameURLstr).mkString
+    play(Source.fromURL(newGameURLstr).mkString)
+  }
+
+  def play(gameJson: String): Boolean = {
+    val (game: Game, dragon: Option[Dragon]) = findSolution(gameJson)
+    sendSolution(game, dragon.get)
+  }
+
+
+  def findSolution(gameJson: String) = {
     val game = objectMapper.readValue(gameJson, classOf[Game])
     val battle_weather = weather.getWeather(new URL(weatherURLstr.replaceAllLiterally(replacement_game_id, game.gameId)))
+    logger.trace(s"weather for game $game is $battle_weather")
+    val dragon = solution.findDragon(game.knight, battle_weather)
+    (game, dragon)
+  }
 
-    val dragon = solution.findDragon(game, battle_weather)
-
-
+  def sendSolution(game: Game, dragon: Dragon): Boolean = {
     val hput = new HttpPut(solutionURLstr.replaceAllLiterally(replacement_game_id, game.gameId))
 
     val params = new StringEntity(dragonJson(dragon), "UTF-8")
@@ -87,8 +118,8 @@ class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
     if (response.getStatusLine.getStatusCode != 200) {
       sys.error(s"Can not send response to ${solutionURLstr.replaceAllLiterally(replacement_game_id, game.gameId)}")
       System.exit(1)
-
     }
+
     val result = objectMapper.readValue(Source.fromInputStream(response.getEntity.getContent).mkString, classOf[GameResult])
     hput.completed()
     if (result.status == "Victory") {
@@ -98,8 +129,7 @@ class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
     }
   }
 
-
-  final def dragonJson(dragon: Dragon) =
+  def dragonJson(dragon: Dragon) =
     s"""
     {
     "dragon": {
