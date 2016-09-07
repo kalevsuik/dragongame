@@ -106,7 +106,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         if (hit) {
           hits += 1
         }
-        println(s" $i -> find =$find and hit=$hit, ratio ${100 * hits / i}%")
+        println(s", overall success ratio ${100 * hits / i}%")
       }
       logger.info(s"From $times knight attacks ${100 * hits / times}%  victoriously defended !")
     }
@@ -123,14 +123,17 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         val resB = sendSolution(game, dragon)
         if (!resB) {
           logger.warn(s"$dragon killed (solution REJECTED) for ${game.knight} in $weather ")
+          print(s"$dragon killed by ${game.knight} in $weather")
           (false, false)
         } else {
-          logger.info(s"HIT -> good $dragon kills ${game.knight} in $weather ")
-
+          val rs=s"HIT -> good $dragon kills ${game.knight} in $weather"
+          logger.info(rs)
+          print(rs)
           (true, true)
         }
 
       case None =>
+        print(s"no good dragon to match ${game.knight} in $weather, learning ...")
         if (GamePlay.learn &&  WeatherStormy != weather) {
           GamePlay.testDragons.par.find({
             dragon =>
@@ -142,7 +145,6 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
                 false
               }
           })
-
 
           if (solution.findDragon(game.knight, weather).isDefined) {
             (true, false)
