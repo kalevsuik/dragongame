@@ -4,6 +4,7 @@
 
 * java 8
 * sbt 0.13.11
+* OSX 10.11  & Ubuntu 14.04
 
 ### Summary of set up ###
 * git clone git@bitbucket.org:kalev_suik/dragon_game.git
