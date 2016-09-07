@@ -16,9 +16,6 @@ import scala.io.Source
 
 case class DBKey(agility: Int, armor: Int, attack: Int, endurance: Int, weather: WeatherCode)
 
-//2016-09-07 03:28:01,453 [main] WARN  ee.dragongame.GamePlay - no solution for Knight(4,5,8,3,Sir. Dennis Garcia of Saskatchewan) in weather WeatherStormy
-
-
 object GamePlay extends StrictLogging {
   val config = ConfigFactory.load(this.getClass.getClassLoader)
 
@@ -66,9 +63,18 @@ object GamePlay extends StrictLogging {
 
     val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
 
+    val numTries = if (args.length > 0) {
+      args(0).toInt
+    } else {
+      1
+    }
+
     //println(gamePlay.play)
 
-    gamePlay.runTimes(1000)
+    gamePlay.runTimes(numTries)
+
+
+    println("solutionProvider.victory.size() = " + solutionProvider.victory.size())
 
     solutionProvider.victory.close()
     solutionProvider.db.close()
@@ -94,23 +100,23 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
   def runTimes(times: Int): Unit = {
-    var hits=0.0
-    for (i <- 1 to times){
-      val (find:Boolean,hit:Boolean)=play(Source.fromURL(newGameURLstr).mkString)
-      if(hit){
-        hits +=1
+    var hits = 0.0
+    for (i <- 1 to times) {
+      val (find: Boolean, hit: Boolean) = play(Source.fromURL(newGameURLstr).mkString)
+      if (hit) {
+        hits += 1
       }
-      println(s" $i -> find =$find and hit=$hit, ration ${100*hits/i}%")
+      println(s" $i -> find =$find and hit=$hit, ration ${100 * hits / i}%")
     }
 
 
   }
 
-  def play: (Boolean,Boolean) = {
+  def play: (Boolean, Boolean) = {
     play(Source.fromURL(newGameURLstr).mkString)
   }
 
-  def play(gameJson: String): (Boolean,Boolean) = {
+  def play(gameJson: String): (Boolean, Boolean) = {
     val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
     dragonOpt match {
       case Some(dragon) =>
@@ -118,9 +124,9 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         val resB = sendSolution(game, dragon)
         if (!resB) {
           logger.warn(s"solution REJECTED for ${game.knight} in weather $weather ")
-          (false,false)
-        }else{
-          (true,true)
+          (false, false)
+        } else {
+          (true, true)
         }
 
       case None =>
@@ -130,7 +136,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
               if (sendSolution(game, dragon)) {
                 solution.addSolution(game.knight, weather, dragon)
                 true
-              }else{
+              } else {
                 logger.trace(s"$dragon is no solution for ${game.knight}")
                 false
               }
@@ -138,14 +144,14 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
           if (solution.findDragon(game.knight, weather).isDefined) {
-            (true,false)
+            (true, false)
           } else {
             logger.warn(s"THERE IS NO solution for ${game.knight} in weather $weather")
-            (false,false)
+            (false, false)
           }
         } else {
           logger.warn(s"no solution for ${game.knight} in weather $weather")
-          (false,false)
+          (false, false)
         }
     }
 
@@ -183,7 +189,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
     }
   }
 
-  def dragonJson(dragon: Dragon) =
+  private def dragonJson(dragon: Dragon) =
     s"""
     {
     "dragon": {
