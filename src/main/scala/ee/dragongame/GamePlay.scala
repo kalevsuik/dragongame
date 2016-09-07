@@ -62,6 +62,18 @@ object GamePlay extends StrictLogging {
     val solutionProvider = new GameSolution
 
     val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
+    val gameOneString =
+      """  {
+                          "gameId": 4441503,
+                            "knight": {
+                              "agility": 7,
+                              "armor": 8,
+                              "attack": 3,
+                              "endurance": 2,
+                              "name": "Sir. Chase Moreno of Manitoba"
+                            }
+                          }"""
+
 
     val gameTwoString =
       """  {
@@ -75,7 +87,8 @@ object GamePlay extends StrictLogging {
                             }
                           }"""
 
-    println(gamePlay.play(gameTwoString))
+    //println(gamePlay.play(gameOneString))
+    println(gamePlay.play)
 
 
   }
@@ -118,14 +131,27 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         resB
       case None =>
         if (GamePlay.learn) {
-          GamePlay.testDragons.par.foreach {
+//          GamePlay.testDragons.par.foreach {
+//            dragon =>
+//              if (sendSolution(game, dragon)) {
+//                solution.addSolution(game.knight, weather, dragon)
+//              }else{
+//                logger.trace(s"$dragon is no solution for ${game.knight}")
+//              }
+//          }
+
+          GamePlay.testDragons.par.find({
             dragon =>
               if (sendSolution(game, dragon)) {
                 solution.addSolution(game.knight, weather, dragon)
+                true
               }else{
                 logger.trace(s"$dragon is no solution for ${game.knight}")
+                false
               }
-          }
+          })
+
+
           if (solution.findDragon(game.knight, weather).isDefined) {
             true
           } else {

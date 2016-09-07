@@ -49,6 +49,7 @@ final class GameSolution(learn: Boolean = false) extends GameSolutionProvider wi
     val ar=victory.get(key.toString)
     if(ar==null || ar.length < 4){
       victory.put(key.toString,dragon2Arrray(dragon))
+      logger.info(s"$knight in $weather has solution $dragon")
     }else{
       logger.info(s"$knight in $weather already has solution, additional $dragon")
     }

@@ -61,7 +61,7 @@
     <root level="trace">
         <appender-ref ref="LOG_ALL" />
         <appender-ref ref="LOG_ALL_INFO" />
-        <appender-ref ref="CONSOLE" />
+        <!-- appender-ref ref="CONSOLE" / -->
     </root>
 
 
