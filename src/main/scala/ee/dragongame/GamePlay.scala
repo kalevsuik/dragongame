@@ -68,7 +68,10 @@ object GamePlay extends StrictLogging {
 
     //println(gamePlay.play)
 
-    gamePlay.runTimes(100)
+    gamePlay.runTimes(1000)
+
+    solutionProvider.victory.close()
+    solutionProvider.db.close()
 
 
   }

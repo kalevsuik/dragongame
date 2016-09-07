@@ -78,6 +78,7 @@ hs_err_pid*
 .idea/dictionaries
 .idea/jsLibraryMappings.xml
 .idea/
+logs/
 
 # Sensitive or high-churn files:
 .idea/dataSources.ids
