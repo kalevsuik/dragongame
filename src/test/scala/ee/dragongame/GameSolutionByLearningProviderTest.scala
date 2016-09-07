@@ -3,9 +3,9 @@ package ee.dragongame
 import ee.dragongame.elements.{Dragon, Game, Knight}
 import org.scalatest.{FunSuite, Matchers, WordSpecLike}
 
-class GameSolutionProviderTest extends WordSpecLike with Matchers {
+class GameSolutionByLearningProviderTest extends WordSpecLike with Matchers {
   "gameSolution" should {
-    val gameSP = new GameSolution
+    val gameSP = new GameSolutionByLearning
     "non existing game return None" in {
       val game =  Knight(10, 10, 10, 10, "Nemo")
       gameSP.findDragon(game, WeatherNormal) shouldBe None

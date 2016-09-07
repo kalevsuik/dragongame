@@ -15,6 +15,8 @@ sealed trait WeatherCode
 
 case object WeatherNormal extends WeatherCode
 
+case object WeatheLongTry extends WeatherCode
+
 case object WeatherStormy extends WeatherCode
 
 case object WeatherRain extends WeatherCode
@@ -38,7 +40,7 @@ class Weather extends WeatherRequest with StrictLogging{
       case "HVA" => WeatherRain
       case "SRO" => WeatherStormy
       case "FUNDEFINEDG" => WeatherFog
-      case "T E" => WeatherNormal
+      case "T E" => WeatheLongTry
       case s =>
         logger.info(s"new weather $weatherAsXML")
         UndefinedWeather(s)
