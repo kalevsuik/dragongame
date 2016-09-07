@@ -71,12 +71,8 @@ object GamePlay extends StrictLogging {
 
     gamePlay.runTimes(numTries)
 
-
-    println(s"${solutionProvider.victoriousDragons.size()} dragons waiting orders !")
-
-    solutionProvider.victoriousDragons.close()
-    solutionProvider.db.close()
-
+    println(solutionProvider.heilMessage)
+    solutionProvider.close
 
   }
 
