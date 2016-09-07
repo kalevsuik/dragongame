@@ -133,8 +133,9 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         }
 
       case None =>
-        print(s"no good dragon to match ${game.knight} in $weather, learning ...")
         if (GamePlay.learn &&  WeatherStormy != weather) {
+          print(s"no good dragon to match ${game.knight} in $weather, learning ...")
+
           GamePlay.testDragons.par.find({
             dragon =>
               if (sendSolution(game, dragon)) {
@@ -153,6 +154,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
             (false, false)
           }
         } else {
+          print(s"no dragon can match ${game.knight} in $weather")
           logger.warn(s"no solution for ${game.knight} in weather $weather")
           (false, false)
         }
