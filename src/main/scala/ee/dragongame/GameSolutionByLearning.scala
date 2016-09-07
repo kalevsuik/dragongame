@@ -9,6 +9,10 @@ trait GameSolutionProvider {
   def findDragon(knight: Knight, weather: WeatherCode): Option[Dragon]
 
   def addSolution(knight: Knight, weather: WeatherCode, dragon: Dragon)
+
+  def close
+
+  def heilMessage:String
 }
 
 final class GameSolutionByLearning(learn: Boolean = false) extends GameSolutionProvider with StrictLogging {
@@ -61,6 +65,13 @@ final class GameSolutionByLearning(learn: Boolean = false) extends GameSolutionP
     Array(dragon.scaleThickness, dragon.clawSharpness, dragon.wingStrength, dragon.fireBreath)
   }
 
+  override def close: Unit = {
+    logger.info(heilMessage)
+    victoriousDragons.close()
+    db.close()
+  }
+
+  override def heilMessage: String = s"${victoriousDragons.size()} dragons waiting orders !"
 }
 
 
@@ -87,4 +98,8 @@ final class GameSolutionByAnalytic extends GameSolutionProvider with StrictLoggi
   }
 
   override def addSolution(knight: Knight, weather: WeatherCode, dragon: Dragon): Unit = {}
+
+  override def close: Unit  = {}
+
+  override def heilMessage: String = "Dragon army ready for orders !"
 }
