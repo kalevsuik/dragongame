@@ -4,7 +4,7 @@ import ee.dragongame.elements.{Dragon, Game, Knight}
 import org.scalatest.{FunSuite, Matchers, WordSpecLike}
 
 class GameSolutionProviderTest extends WordSpecLike with Matchers {
-  "GameSolution" should {
+  "gameSolution" should {
     val gameSP = new GameSolution
     "non existing game return None" in {
       val game =  Knight(10, 10, 10, 10, "Nemo")

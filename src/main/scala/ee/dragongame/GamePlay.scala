@@ -69,8 +69,6 @@ object GamePlay extends StrictLogging {
       1
     }
 
-    //println(gamePlay.play)
-
     gamePlay.runTimes(numTries)
 
 
@@ -100,16 +98,18 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
   def runTimes(times: Int): Unit = {
-    var hits = 0.0
-    for (i <- 1 to times) {
-      val (find: Boolean, hit: Boolean) = play(Source.fromURL(newGameURLstr).mkString)
-      if (hit) {
-        hits += 1
+    if(times<1){
+      logger.warn("Can not play :-( ")
+    }else{
+      var hits = 0.0
+      for (i <- 1 to times) {
+        val (find: Boolean, hit: Boolean) = play(Source.fromURL(newGameURLstr).mkString)
+        if (hit) {
+          hits += 1
+        }
+        println(s" $i -> find =$find and hit=$hit, ratio ${100 * hits / i}%")
       }
-      println(s" $i -> find =$find and hit=$hit, ration ${100 * hits / i}%")
     }
-
-
   }
 
   def play: (Boolean, Boolean) = {
@@ -120,17 +120,17 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
     val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
     dragonOpt match {
       case Some(dragon) =>
-        logger.info(s"HIT ->solution for ${game.knight} in weather $weather already exists")
+        logger.info(s"HIT -> good dragon for ${game.knight} in $weather is $dragon")
         val resB = sendSolution(game, dragon)
         if (!resB) {
-          logger.warn(s"solution REJECTED for ${game.knight} in weather $weather ")
+          logger.warn(s"dragon killed (solution REJECTED) for ${game.knight} in weather $weather ")
           (false, false)
         } else {
           (true, true)
         }
 
       case None =>
-        if (GamePlay.learn && weather != WeatherStormy) {
+        if (GamePlay.learn &&  WeatherStormy != weather) {
           GamePlay.testDragons.par.find({
             dragon =>
               if (sendSolution(game, dragon)) {

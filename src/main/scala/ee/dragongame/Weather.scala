@@ -2,6 +2,8 @@ package ee.dragongame
 
 import java.net.URL
 
+import com.typesafe.scalalogging.StrictLogging
+
 import scala.xml.Elem
 
 trait WeatherRequest{
@@ -19,8 +21,9 @@ case object WeatherRain extends WeatherCode
 
 case object WeatherFog extends WeatherCode
 
+case class UndefinedWeather(code:String) extends WeatherCode
 
-class Weather extends WeatherRequest{
+class Weather extends WeatherRequest with StrictLogging{
 
   def getWeather(weatherURL: URL) = {
     val weatherAsXML = scala.xml.XML.load(weatherURL)
@@ -36,9 +39,9 @@ class Weather extends WeatherRequest{
       case "SRO" => WeatherStormy
       case "FUNDEFINEDG" => WeatherFog
       case "T E" => WeatherNormal
-      case s => println(weatherAsXML)
-        System.exit(1)
-        WeatherFog
+      case s =>
+        logger.info(s"new weather $weatherAsXML")
+        UndefinedWeather(s)
     }
   }
 }
