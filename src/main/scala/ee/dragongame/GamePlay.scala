@@ -1,6 +1,7 @@
 package ee.dragongame
 
 import java.net.URL
+import java.time.{Duration, Instant}
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -71,10 +72,19 @@ object GamePlay extends StrictLogging {
       new GameSolutionByLearning
     }
 
+    val durationOp = if (args.length > 2) {
+      Some(Duration.parse(args(2)))
+    } else {
+      None
+    }
+
     val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
 
+    durationOp match {
+      case Some(duration) => gamePlay.runDuring(duration)
+      case None => gamePlay.runTimes(numTries)
+    }
 
-    gamePlay.runTimes(numTries)
 
     println(solutionProvider.heilMessage)
     solutionProvider.close
@@ -86,6 +96,8 @@ object GamePlay extends StrictLogging {
 
 final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProvider,
                      val replacement_game_id: String, val newGameURLstr: String, val solutionURLstr: String, val weatherURLstr: String) extends StrictLogging {
+
+
   require(weather != null)
   require(solution != null)
   require(replacement_game_id != null)
@@ -98,10 +110,30 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
   objectMapper.registerModule(DefaultScalaModule)
 
 
+  def runDuring(duration: Duration) = {
+    val endTime = Instant.now().plus(duration)
+    var counter = 0
+    var hits = 0.0
+    var hitsPer100 = 0.0
+
+    while (Instant.now().isBefore(endTime)) {
+      counter += 1
+      val (find: Boolean, hit: Boolean) = play(Source.fromURL(newGameURLstr).mkString)
+      if (hit) {
+        hits += 1
+      }
+      hitsPer100 = 100 * hits / counter
+      println(f", for $counter  battles, overall success ratio $hitsPer100%1.2f %% ")
+
+    }
+    logger.info(f"From $counter knight attacks $hitsPer100%1.2f %%  victoriously defended !")
+
+  }
+
   def runTimes(times: Int): Unit = {
-    if(times<1){
+    if (times < 1) {
       logger.warn("Can not play :-( ")
-    }else{
+    } else {
       var hits = 0.0
       var hitsPer100 = 0.0
       for (i <- 1 to times) {
@@ -130,14 +162,14 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
           print(s"$dragon killed by ${game.knight} in $weather")
           findGoodDragon(game, weather)
         } else {
-          val rs=s"HIT -> good $dragon kills ${game.knight} in $weather"
+          val rs = s"HIT -> good $dragon kills ${game.knight} in $weather"
           logger.info(rs)
           print(rs)
           (true, true)
         }
 
       case None =>
-        if (GamePlay.learn &&  WeatherStormy != weather) {
+        if (GamePlay.learn && WeatherStormy != weather) {
           print(s"no good dragon to match ${game.knight} in $weather, learning ...")
 
           findGoodDragon(game, weather)
