@@ -62,33 +62,10 @@ object GamePlay extends StrictLogging {
     val solutionProvider = new GameSolution
 
     val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
-    val gameOneString =
-      """  {
-                          "gameId": 4441503,
-                            "knight": {
-                              "agility": 7,
-                              "armor": 8,
-                              "attack": 3,
-                              "endurance": 2,
-                              "name": "Sir. Chase Moreno of Manitoba"
-                            }
-                          }"""
 
+    //println(gamePlay.play)
 
-    val gameTwoString =
-      """  {
-                          "gameId": 8613491,
-                            "knight": {
-                              "agility": 8,
-                              "armor": 6,
-                              "attack": 4,
-                              "endurance": 2,
-                              "name": "Sir. Dale Moore of Nova Scotia"
-                            }
-                          }"""
-
-    //println(gamePlay.play(gameOneString))
-    println(gamePlay.play)
+    gamePlay.runTimes(100)
 
 
   }
@@ -111,6 +88,10 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
   def runTimes(times: Int): Unit = {
+    for (i <- 1 to times){
+      println(play(Source.fromURL(newGameURLstr).mkString))
+    }
+
 
   }
 
@@ -122,7 +103,8 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
     val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
     dragonOpt match {
       case Some(dragon) =>
-        logger.info(s"solution for ${game.knight} in weather $weather already exists")
+        println("HIT")
+        logger.info(s"HIT ->solution for ${game.knight} in weather $weather already exists")
         val resB = sendSolution(game, dragon)
         if (!resB) {
           logger.error("solution rejected")

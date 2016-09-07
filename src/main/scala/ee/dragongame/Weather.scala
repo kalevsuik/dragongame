@@ -32,10 +32,13 @@ class Weather extends WeatherRequest{
   def parseWeatherString(weatherAsXML: Elem): WeatherCode with Product with Serializable = {
     (weatherAsXML \ "code").text match {
       case "NMR" => WeatherNormal
-      case "STORM" => WeatherStormy
-      case "RAIN" => WeatherRain
-      case "FOG" => WeatherFog
-
+      case "HVA" => WeatherRain
+      case "SRO" => WeatherStormy
+      case "FUNDEFINEDG" => WeatherFog
+      case "T E" => WeatherNormal
+      case s => println(weatherAsXML)
+        System.exit(1)
+        WeatherFog
     }
   }
 }
