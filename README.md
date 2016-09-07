@@ -11,6 +11,6 @@
 * sbt "run 20"
 * where 20 is number of battles
 
-### Configuration can be found under ###
+### Configuration can be found as below, but should not be needed ###
 * src/main/resources/application.conf
 * src/main/resources/logback.xml

@@ -2,7 +2,7 @@ package ee.dragongame
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import ee.dragongame.elements.{Dragon, Game, Knight}
+import ee.dragongame.elements.{Dragon, Knight}
 import org.mapdb.{DB, DBMaker, Serializer}
 
 trait GameSolutionProvider {
@@ -27,16 +27,16 @@ final class GameSolution(learn: Boolean = false) extends GameSolutionProvider wi
     .closeOnJvmShutdown()
     .make()
 
-  val victory = db.treeMap("victory")
+  val victoriousDragons = db.treeMap("victory")
     .keySerializer(Serializer.STRING)
     .valueSerializer(Serializer.INT_ARRAY)
     .createOrOpen()
 
-  logger.info(s"number of games loaded ${victory.size()}")
+  logger.info(s"${victoriousDragons.size()} dragons ready for battle !")
 
   def findDragon(knight: Knight, weather: WeatherCode): Option[Dragon] = {
     val key=DBKey(agility = knight.agility,armor = knight.armor,attack = knight.attack,endurance = knight.endurance,weather)
-    val ar=victory.get(key.toString)
+    val ar=victoriousDragons.get(key.toString)
     if(ar==null || ar.length < 4){
       None
     }else{
@@ -46,16 +46,16 @@ final class GameSolution(learn: Boolean = false) extends GameSolutionProvider wi
 
   def addSolution(knight: Knight, weather: WeatherCode, dragon: Dragon): Unit ={
     val key=DBKey(agility = knight.agility,armor = knight.armor,attack = knight.attack,endurance = knight.endurance,weather)
-    val ar=victory.get(key.toString)
+    val ar=victoriousDragons.get(key.toString)
     if(ar==null || ar.length < 4){
-      victory.put(key.toString,dragon2Arrray(dragon))
-      logger.info(s"$knight in $weather has solution $dragon")
+      victoriousDragons.put(key.toString,dragon2Arrray(dragon))
+      logger.info(s"$knight in $weather shall find a matching dragon $dragon")
     }else{
-      logger.info(s"$knight in $weather already has solution, additional $dragon")
+      logger.info(s"There is already matching dragon for $knight in $weather , but $dragon could do as well")
     }
   }
 
-  def dragon2Arrray(dragon: Dragon) ={
+  private def dragon2Arrray(dragon: Dragon) ={
     Array(dragon.scaleThickness,dragon.clawSharpness,dragon.wingStrength,dragon.fireBreath)
   }
 

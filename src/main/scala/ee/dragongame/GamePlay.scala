@@ -4,13 +4,12 @@ import java.net.URL
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import ee.dragongame.elements.{Dragon, Game, GameResult}
 import org.apache.http.client.methods.HttpPut
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClientBuilder
-import org.mapdb.{DB, DBMaker, Serializer}
 
 import scala.io.Source
 
@@ -72,9 +71,9 @@ object GamePlay extends StrictLogging {
     gamePlay.runTimes(numTries)
 
 
-    println("solutionProvider.victory.size() = " + solutionProvider.victory.size())
+    println(s"${solutionProvider.victoriousDragons.size()} dragons waiting orders !")
 
-    solutionProvider.victory.close()
+    solutionProvider.victoriousDragons.close()
     solutionProvider.db.close()
 
 
@@ -109,6 +108,7 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
         }
         println(s" $i -> find =$find and hit=$hit, ratio ${100 * hits / i}%")
       }
+      logger.info(s"From $times knight attacks ${100 * hits / times}%  victoriously defended !")
     }
   }
 
@@ -120,12 +120,13 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
     val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
     dragonOpt match {
       case Some(dragon) =>
-        logger.info(s"HIT -> good dragon for ${game.knight} in $weather is $dragon")
         val resB = sendSolution(game, dragon)
         if (!resB) {
-          logger.warn(s"dragon killed (solution REJECTED) for ${game.knight} in weather $weather ")
+          logger.warn(s"$dragon killed (solution REJECTED) for ${game.knight} in $weather ")
           (false, false)
         } else {
+          logger.info(s"HIT -> good $dragon kills ${game.knight} in $weather ")
+
           (true, true)
         }
 
