@@ -58,16 +58,21 @@ object GamePlay extends StrictLogging {
     logger.trace(s"learn=" + learn)
 
     val weatherProvider = new Weather
-    val solutionProvider = new GameSolutionByLearning
-    //val solutionProvider = new GameSolutionByAnalytic
-
-    val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
 
     val numTries = if (args.length > 0) {
       args(0).toInt
     } else {
       1
     }
+
+    val solutionProvider = if (args.length > 1 && "ana" == args(1)) {
+      new GameSolutionByAnalytic
+    } else {
+      new GameSolutionByLearning
+    }
+
+    val gamePlay = new GamePlay(weatherProvider, solutionProvider, replacement_game_id, newGameURL, solutionURL, weatherURL)
+
 
     gamePlay.runTimes(numTries)
 
