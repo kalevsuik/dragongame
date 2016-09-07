@@ -102,14 +102,16 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
       logger.warn("Can not play :-( ")
     }else{
       var hits = 0.0
+      var hitsPer100 = 0.0
       for (i <- 1 to times) {
         val (find: Boolean, hit: Boolean) = play(Source.fromURL(newGameURLstr).mkString)
         if (hit) {
           hits += 1
         }
-        println(s", overall success ratio ${100 * hits / i}%")
+        hitsPer100 = 100 * hits / i
+        println(f", overall success ratio $hitsPer100%1.2f %% ")
       }
-      logger.info(s"From $times knight attacks ${100 * hits / times}%  victoriously defended !")
+      logger.info(f"From $times knight attacks $hitsPer100%1.2f %%  victoriously defended !")
     }
   }
 
