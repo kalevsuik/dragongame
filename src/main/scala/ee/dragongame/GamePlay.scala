@@ -16,6 +16,9 @@ import scala.io.Source
 
 case class DBKey(agility: Int, armor: Int, attack: Int, endurance: Int, weather: WeatherCode)
 
+//2016-09-07 03:28:01,453 [main] WARN  ee.dragongame.GamePlay - no solution for Knight(4,5,8,3,Sir. Dennis Garcia of Saskatchewan) in weather WeatherStormy
+
+
 object GamePlay extends StrictLogging {
   val config = ConfigFactory.load(this.getClass.getClassLoader)
 
@@ -88,40 +91,37 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
   def runTimes(times: Int): Unit = {
+    var hits=0.0
     for (i <- 1 to times){
-      println(play(Source.fromURL(newGameURLstr).mkString))
+      val (find:Boolean,hit:Boolean)=play(Source.fromURL(newGameURLstr).mkString)
+      if(hit){
+        hits +=1
+      }
+      println(s" $i -> find =$find and hit=$hit, ration ${100*hits/i}%")
     }
 
 
   }
 
-  def play: Boolean = {
+  def play: (Boolean,Boolean) = {
     play(Source.fromURL(newGameURLstr).mkString)
   }
 
-  def play(gameJson: String): Boolean = {
+  def play(gameJson: String): (Boolean,Boolean) = {
     val (game: Game, weather: WeatherCode, dragonOpt: Option[Dragon]) = findSolution(gameJson)
     dragonOpt match {
       case Some(dragon) =>
-        println("HIT")
         logger.info(s"HIT ->solution for ${game.knight} in weather $weather already exists")
         val resB = sendSolution(game, dragon)
         if (!resB) {
-          logger.error("solution rejected")
-          System.exit(1)
+          logger.warn(s"solution REJECTED for ${game.knight} in weather $weather ")
+          (false,false)
+        }else{
+          (true,true)
         }
-        resB
-      case None =>
-        if (GamePlay.learn) {
-//          GamePlay.testDragons.par.foreach {
-//            dragon =>
-//              if (sendSolution(game, dragon)) {
-//                solution.addSolution(game.knight, weather, dragon)
-//              }else{
-//                logger.trace(s"$dragon is no solution for ${game.knight}")
-//              }
-//          }
 
+      case None =>
+        if (GamePlay.learn && weather != WeatherStormy) {
           GamePlay.testDragons.par.find({
             dragon =>
               if (sendSolution(game, dragon)) {
@@ -135,14 +135,14 @@ final class GamePlay(val weather: WeatherRequest, val solution: GameSolutionProv
 
 
           if (solution.findDragon(game.knight, weather).isDefined) {
-            true
+            (true,false)
           } else {
-            logger.warn(s"no solution for ${game.knight} in weather $weather")
-            false
+            logger.warn(s"THERE IS NO solution for ${game.knight} in weather $weather")
+            (false,false)
           }
         } else {
           logger.warn(s"no solution for ${game.knight} in weather $weather")
-          false
+          (false,false)
         }
     }
 
