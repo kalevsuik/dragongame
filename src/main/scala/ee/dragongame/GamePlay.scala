@@ -43,6 +43,17 @@ object GamePlay extends StrictLogging {
     List.empty[Dragon]
   }
 
+  /**
+    * Run with parameter '100'  <- number of games to be played, ex 100 times here
+    *
+    * Undocumented ways of running :
+    * '1000  ana'  <- 1000 times with analytical games solver.
+    * Default games solver is "self learning" solver, missing 2nd parameter or putting what ever except 'ana' starts default solver
+    *
+    * '12 xxx PT10M'  <- Games is played 10 min, 3rd indicating duration (parsed as java duration which follows ISO),
+    * if 3rd parameter is present, then 1st is ignored
+    *
+    */
 
   def main(args: Array[String]): Unit = {
 
